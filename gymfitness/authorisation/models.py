@@ -3,12 +3,14 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class CustomUser(AbstractUser):
-    password = models.CharField(max_length=255)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-    is_trainer = models.BooleanField(default=False)
+    USER_TYPES = (
+        ('trainer', 'Trainer'),
+        ('client', 'Client'),
+    )
+    user_type = models.CharField(max_length=7, choices=USER_TYPES)
 
-    REQUIRED_FIELDS = []
+    def __str__(self):
+        return self.username
 
 
 class Gym(models.Model):
@@ -20,16 +22,18 @@ class Gym(models.Model):
 
 
 class Trainer(models.Model):
-    name = models.CharField(max_length=100)
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
     specialization = models.CharField(max_length=100)
-    gym = models.OneToOneField(Gym, on_delete=models.CASCADE)
+    gym = models.OneToOneField(Gym, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.name
 
 class Client(models.Model):
-    name = models.CharField(max_length=100)
-    age = models.IntegerField()
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    age = models.IntegerField(null=True)
 
     def __str__(self):
         return self.name

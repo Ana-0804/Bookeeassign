@@ -1,37 +1,26 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Gym, Trainer, Client, WorkoutSession, CustomUser
 
-class CustomUserSerializer(serializers.Serializer):
+
+class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['username', 'password', 'is_trainer']
+        fields = ['id', 'username', 'email', 'user_type']
+        extra_kwargs = {'password': {'write_only': True}}
 
-    def create(self, validated_data):
-        username = validated_data.get('username', None)
-        password = validated_data.get('password', None)
-        is_trainer = validated_data.get('is_trainer', None)
-        specialization = validated_data.get('specialization', None)
-        age = validated_data.get('age', None)
-        hashed_password = make_password(password)
-        existing_user = CustomUser.objects.filter(username=username).first()
-        if existing_user:
-            raise serializers.ValidationError({'username': 'This username is already in use.'})
-        else:
-            user = CustomUser.objects.create(password=hashed_password, **validated_data)
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['user_id'] = user.id
+        return token
 
-        if is_trainer == True:
-            if specialization:
-                Trainer.objects.create(user=user, specialization=specialization)
-            else:
-                raise serializers.ValidationError({'specialization': 'This field is required for Trainer registration.'})
-        else:
-            if age:
-                Client.objects.create(user=user, specialization=specialization)
-            else:
-                raise serializers.ValidationError({'Age': 'This field is required for Trainer registration.'})
-        return user
-
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['user_id'] = self.user.id
+        return data
 
 class GymSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,3 +41,5 @@ class WorkoutSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkoutSession
         fields = '__all__'
+
+
