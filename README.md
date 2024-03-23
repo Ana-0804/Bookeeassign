@@ -1,4 +1,4 @@
-##GymFitness Project
+## GymFitness Project
 
 
 ## Overview
